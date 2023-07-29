@@ -12,8 +12,8 @@ fn main() {
         println!("Please provide the input file and output file names.");
     } else {
         // If 2 arguments are provided, proceed with assembling the code
-        let mut assembler = HackAssembler::default();
-        assembler.load_file(&args[1].to_string());
+        let mut assembler = HackAssembler::new(&args[1].to_string());
+        assembler.load_file();
         match assembler.assemble(&args[2].to_string()) {
             Ok(_) => {
                 println!("Conversion completed.");
