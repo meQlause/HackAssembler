@@ -74,12 +74,12 @@ impl HackAssembler {
     pub fn load_file(&mut self, file: &String) {
         self.file_name = file.to_string();
         self.file = match File::open(file) {
-            Ok(file) => {
-                self.add_labels_symbols_map();
-                FileOrError::F(file)
-            }
+            Ok(file) => FileOrError::F(file),
             Err(_) => FileOrError::E(String::from("Can't load file")),
-        }
+        };
+        if let &FileOrError::F(_) = &self.file {
+            self.add_labels_symbols_map();
+        };
     }
     fn a_instruction(&self, a: &i16) -> String {
         println!("0{:015b} = {}", a, a);
@@ -225,7 +225,11 @@ impl HackAssembler {
         let mut file_to_write = File::create(file)?;
         match &self.file {
             FileOrError::F(file) => {
-                let reader = BufReader::new(file);
+                //Reset the pointer to 0
+                let mut new_f = file.clone();
+                new_f.seek(SeekFrom::Start(0)).unwrap();
+
+                let reader = BufReader::new(new_f);
                 for line in reader.lines() {
                     let input = line.unwrap().trim().to_string();
                     if let Some(c) = input.chars().next() {
@@ -387,13 +391,8 @@ impl Default for HackAssembler {
         }
 
         HackAssembler {
-            file_name: String::from("test.txt"),
-            file: match File::open("test.txt") {
-                Ok(file) => FileOrError::F(file),
-                Err(_) => FileOrError::E(String::from(
-                    "Cant open file, call load_file(-filename-) to load file.",
-                )),
-            },
+            file_name: String::from("First init.."),
+            file: FileOrError::E(String::from("First Init..")),
             instructions: add_instruction(a_zero, a_one, dest, jump),
             labels_symbols_map: predefined_symbols.into_iter().collect(),
         }
