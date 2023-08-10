@@ -1,4 +1,5 @@
 mod assembler;
+mod table;
 use assembler::HackAssembler;
 use std::env;
 fn main() {
