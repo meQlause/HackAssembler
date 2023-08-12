@@ -15,6 +15,24 @@ pub struct Parser {
 }
 
 impl ParseTrait for Parser {
+    /// Creates a new Parser instance by opening the specified file.
+    ///
+    /// # Arguments
+    ///
+    /// - `f`: A string slice representing the file path to open.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let parser = Parser::new("commands.txt");
+    /// ```
+    ///
+    /// This method takes a string slice (`&str`) representing the file path to open.
+    /// It attempts to open the file using `File::open` and returns a new `Parser` instance.
+    /// If the file open operation is successful, the method initializes the `Parser` struct with the opened file.
+    /// The opened file is wrapped in a buffered reader using `BufReader::new`.
+    /// The `current_command` and `next_command` fields of the `Parser` struct are initialized with empty strings.
+    /// If the file open operation fails, the method panics with the message "Can't open file".
     fn new(f: &str) -> Parser {
         match File::open(f) {
             Ok(f) => {
@@ -28,6 +46,26 @@ impl ParseTrait for Parser {
             _ => panic!("Can't open file"),
         }
     }
+    /// Sets the current command by reading the next line from the input file.
+    ///
+    /// This method attempts to read the next line from the input file and processes it to set the current command.
+    /// It skips lines that are comments (start with '/') or empty lines.
+    /// The line is split by '/' to remove comments and other unnecessary data.
+    /// The first part of the line (after removing comments) is taken as the verified next instruction.
+    /// If a valid command is found, the `advance()` method is invoked with the next instruction to set the current command.
+    ///
+    /// # Returns
+    ///
+    /// - `true` if a valid command is found and the current command is successfully set.
+    /// - `false` if the end of the file is reached and no new command is available.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut parser = Parser::new("commands.txt");
+    /// let result = parser.set_command();
+    /// assert_eq!(result, true);
+    /// ```
     fn set_command(&mut self) -> bool {
         loop {
             self.next_command.clear();
