@@ -1,8 +1,12 @@
+use super::parser::Parser;
 use std::collections::HashMap;
+use std::io::Seek;
+use std::io::{BufRead, BufReader, SeekFrom};
 
-struct Table {
-    instructions: HashMap<String, HashMap<String, String>>,
-    tables: HashMap<String, i16>,
+#[derive(Debug)]
+pub struct Table {
+    pub instructions: HashMap<String, HashMap<String, String>>,
+    pub tables: HashMap<String, i16>,
 }
 
 impl Table {
@@ -106,24 +110,74 @@ impl Table {
             tables: predefined_table.into_iter().collect(),
         }
     }
+    pub fn init_label(&mut self, parser: &mut Parser) {
+        let (mut l, mut l_sum, mut n) = (0, 0, 15);
+        // First iteration
+        let mut new_parser = parser.file.get_ref().clone();
 
-    fn get_a0(&self, key: &str) -> String {
+        for line in BufReader::new(new_parser).lines() {
+            let mut label = line.unwrap().trim().to_string();
+            // dbg!("label = {}", &label);
+            if let Some(c) = label.chars().next() {
+                if c == '(' {
+                    // println!("added {}", label);
+                    label = label[1..label.len() - 1].to_string();
+                    self.add(&label, l - l_sum);
+                    l_sum += 1;
+                }
+                if c != '/' && c != ' ' {
+                    l += 1;
+                }
+            }
+        }
+        new_parser.seek(SeekFrom::Start(0)).unwrap();
+        // Second Iteration
+        for line in BufReader::new(new_parser).lines() {
+            let mut symbol = line.unwrap().trim().to_string();
+            // dbg!("symbol ={}", &symbol);
+            if let Some(c) = symbol.chars().next() {
+                if c == '@' {
+                    symbol = symbol.trim()[1..].to_string();
+                    match symbol.parse::<i16>() {
+                        Ok(_) => continue,
+                        Err(_) => {
+                            if self.add_if_not_exist(&symbol, n) {
+                                n += 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        new_parser.seek(SeekFrom::Start(0)).unwrap();
+    }
+    pub fn get_a0(&self, key: &str) -> Option<&String> {
         let t = self.instructions.get("COMP_A_0").unwrap();
-        t.get(key).unwrap().to_string()
+        t.get(key)
     }
-    fn get_a1(&self, key: &str) -> String {
+    pub fn get_a1(&self, key: &str) -> Option<&String> {
         let t = self.instructions.get("COMP_A_1").unwrap();
-        t.get(key).unwrap().to_string()
+        t.get(key)
     }
-    fn get_dst(&self, key: &str) -> String {
+    pub fn get_dst(&self, key: &str) -> Option<&String> {
         let t = self.instructions.get("DEST").unwrap();
-        t.get(key).unwrap().to_string()
+        t.get(key)
     }
-    fn get_jmp(&self, key: &str) -> String {
+    pub fn get_jmp(&self, key: &str) -> Option<&String> {
         let t = self.instructions.get("JUMP").unwrap();
-        t.get(key).unwrap().to_string()
+        t.get(key)
     }
-    fn add(&mut self, key: &str, num: i16) {
+    pub fn add(&mut self, key: &str, num: i16) {
         self.tables.insert(key.to_string(), num);
+    }
+    pub fn add_if_not_exist(&mut self, key: &str, num: i16) -> bool {
+        if !self.is_exists(key) {
+            self.tables.entry(key.to_string()).or_insert(num);
+            return true;
+        }
+        false
+    }
+    pub fn is_exists(&self, key: &str) -> bool {
+        self.tables.contains_key(key)
     }
 }
