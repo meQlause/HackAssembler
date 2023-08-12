@@ -37,16 +37,24 @@ fn main() {
     // println!("{:?}", table.tables);
     loop {
         if par.set_command() {
-            if par.current_command.chars().next() == Some('@') {
-                if let Some(val) = table.tables.get(&par.current_command.to_string()) {
-                    code.write(&code.c_instruction(&par.current_command.to_string(), &table));
-                } else {
-                    code.write(
-                        &code.a_instruction(&par.current_command[1..].parse::<i16>().unwrap()),
-                    )
+            if let Some(c) = par.current_command.chars().next() {
+                if c == '@' {
+                    let value: i16 = if let Some(val) =
+                        table.tables.get(&par.current_command[1..].to_string())
+                    {
+                        *val
+                    } else {
+                        let val = par.current_command.clone().trim()[1..].to_string();
+                        let to_return = val.parse::<i16>().unwrap();
+                        to_return
+                    };
+
+                    code.write(&code.a_instruction(&value));
+                } else if c != '/' && c != ' ' && c != '(' {
+                    code.write(&code.c_instruction(&par.current_command, &table));
                 }
             }
+            // break;
         }
-        break;
     }
 }

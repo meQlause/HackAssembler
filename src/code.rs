@@ -87,7 +87,7 @@ impl Code {
         }
 
         // Return the final formatted binary representation.
-        dbg!("{}{}{}{} = {:?}", &to_return, &comp, &dst, &jmp, &ins[0]);
+        println!("{}{}{}{} = {:?}", to_return, comp, dst, jmp, ins.join("="));
         to_return + &comp + &dst + &jmp
     }
 
