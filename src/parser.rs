@@ -1,15 +1,21 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::io::{Seek, SeekFrom};
 
+pub trait ParseTrait {
+    fn new(name: &str) -> Parser;
+    fn set_command(&mut self) -> bool;
+}
+trait ParseTraitPrivate {
+    fn advance(&mut self);
+}
 pub struct Parser {
     pub file: BufReader<File>,
     pub current_command: String,
     next_command: String,
 }
 
-impl Parser {
-    pub fn new(f: &str) -> Parser {
+impl ParseTrait for Parser {
+    fn new(f: &str) -> Parser {
         match File::open(f) {
             Ok(f) => {
                 let to_pass = BufReader::new(f);
@@ -22,7 +28,7 @@ impl Parser {
             _ => panic!("Can't open file"),
         }
     }
-    pub fn set_command(&mut self) -> bool {
+    fn set_command(&mut self) -> bool {
         loop {
             self.next_command.clear();
             // Attempt to read the next line from the input file.
@@ -57,6 +63,9 @@ impl Parser {
             };
         }
     }
+}
+
+impl ParseTraitPrivate for Parser {
     fn advance(&mut self) {
         // Update current_command with the next_instruction.
         self.current_command = self.next_command.clone();

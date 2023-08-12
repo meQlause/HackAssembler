@@ -1,24 +1,28 @@
-use super::parser::Parser;
 use super::table::Table;
 use std::fs::File;
 use std::io::Write;
+
+pub trait CodeTrait {
+    fn new(output: String) -> Code;
+    fn a_instruction(&self, a: i16) -> String;
+    fn c_instruction(&self, a: &String, table: &Table) -> String;
+    fn write(&mut self, text: &str);
+}
 pub struct Code {
-    file_name: String,
     pub file: File,
 }
 
-impl Code {
-    pub fn new(output: String) -> Code {
+impl CodeTrait for Code {
+    fn new(output: String) -> Code {
         Code {
             file: File::create(&output).expect("can't create file"),
-            file_name: output,
         }
     }
-    pub fn a_instruction(&self, a: &i16) -> String {
+    fn a_instruction(&self, a: i16) -> String {
         println!("0{:015b} = {}", a, a);
         format!("0{:015b}", a)
     }
-    pub fn c_instruction(&self, a: &String, table: &Table) -> String {
+    fn c_instruction(&self, a: &String, table: &Table) -> String {
         let (mut jmp, mut dst, mut comp, mut r, mut to_return) = (
             String::new(),
             String::new(),
@@ -91,7 +95,7 @@ impl Code {
         to_return + &comp + &dst + &jmp
     }
 
-    pub fn write(&mut self, text: &str) {
+    fn write(&mut self, text: &str) {
         writeln!(self.file, "{}", text).expect("can't write.");
     }
 }
